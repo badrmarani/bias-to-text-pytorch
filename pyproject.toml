@@ -6,9 +6,38 @@ authors = ["badrmarani <badr-eddine.marani@outlook.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "3.10.9"
+torch = "^2.1.0"
+torchvision = "^0.16.0"
+transformers = "^4.34.0"
+ipykernel = "^6.25.2"
+ipywidgets = "^8.1.1"
+pandas = "^2.1.1"
+clip = {git = "https://github.com/openai/CLIP.git"}
+scikit-image = "^0.22.0"
+ftfy = "^6.1.1"
 
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 80
+target_version = ["py38", "py39", "py310", "py311"]
+include = '\.pyi?$'
+exclude = '''
+/(
+    __pycache__
+  | \.git
+  | \.mypy_cache
+  | \.ipynb_checkpoints
+  | build
+  | dist
+  | auto_tutorials_source/*
+)/
+'''
+
+[tool.isort]
+line_length = 80
+profile = "black"
