@@ -84,9 +84,6 @@ def main(model_path, extract_captions):
                     caption=caption,
                 )
 
-                break
-            break
-
         os.makedirs(results_dir, exist_ok=True)
         df.to_csv(df_results_path)
 
