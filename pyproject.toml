@@ -4,6 +4,7 @@ version = "0.1.0"
 description = ""
 authors = ["badrmarani <badr-eddine.marani@outlook.com>"]
 readme = "README.md"
+packages = [{ include = "commonalizer" }]
 
 [tool.poetry.dependencies]
 python = "3.10.9"
@@ -16,7 +17,11 @@ pandas = "^2.1.1"
 clip = {git = "https://github.com/openai/CLIP.git"}
 scikit-image = "^0.22.0"
 ftfy = "^6.1.1"
-
+isort = "^5.12.0"
+black = "^23.9.1"
+flake8 = "^6.1.0"
+pre-commit = "^3.5.0"
+pre-commit-hooks = "^4.5.0"
 
 [build-system]
 requires = ["poetry-core"]
@@ -32,12 +37,10 @@ exclude = '''
   | \.git
   | \.mypy_cache
   | \.ipynb_checkpoints
-  | build
-  | dist
-  | auto_tutorials_source/*
 )/
 '''
 
 [tool.isort]
 line_length = 80
 profile = "black"
+known_first_party = ["numpy"]
