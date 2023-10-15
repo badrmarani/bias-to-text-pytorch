@@ -1,6 +1,8 @@
 import os
+import random
 import warnings
 from argparse import ArgumentParser
+from contextlib import contextmanager
 
 import pandas as pd
 import torch
@@ -8,16 +10,30 @@ from torch import utils
 from torch.serialization import SourceChangeWarning
 from tqdm import tqdm
 
+import numpy as np
 from commonalizer.dataset import CelebA
 from commonalizer.utils.clip_prefix_captioning_inference import extract_caption
 
 warnings.filterwarnings("ignore", category=SourceChangeWarning)
 
 
-def dir_empty(dir_path):
-    return not next(os.scandir(dir_path), None)
+@contextmanager
+def seed_everything(seed=42):
+    random.seed(seed)
+    np.random.default_rng(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+        torch.backends.cudnn.enabled = True
+    yield
 
 
+@seed_everything(42)
 @torch.no_grad()
 def main(model_path, extract_captions):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
