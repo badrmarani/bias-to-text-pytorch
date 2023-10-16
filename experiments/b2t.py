@@ -32,9 +32,12 @@ def main(model_path, extract_captions):
 
     image_dir = "./data/celeba/img_align_celeba/"
     results_dir = "results/b2t/celeba_blond_male/"
-    df_results_path = os.path.join(results_dir, "b2t_celeba_blond_male.csv")
+    df_results1_path = os.path.join(results_dir, "b2t_celeba_blond_male.csv")
+    df_results2_path = os.path.join(
+        results_dir, "b2t_celeba_blond_clipscore.csv"
+    )
 
-    if not os.path.exists(df_results_path):
+    if not os.path.exists(df_results1_path):
         model = torch.load(model_path, map_location=device)
         model.eval()
 
@@ -46,7 +49,8 @@ def main(model_path, extract_captions):
                 "correct",
                 "group",
                 "confounder",
-                "caption",
+                "caption/clipcap",
+                "caption/git",
             ],
         )
 
@@ -85,24 +89,24 @@ def main(model_path, extract_captions):
                 )
 
         os.makedirs(results_dir, exist_ok=True)
-        df.to_csv(df_results_path)
+        df.to_csv(df_results1_path)
 
     else:
-        df = pd.read_csv(df_results_path, index_col=0)
+        df = pd.read_csv(df_results1_path, index_col=0)
 
     # extract keywords
     df_correct = df[df["correct"] == 0]
     df_wrong = df[df["correct"] == 1]
 
-    # y: blond; pred: not blond
-    df_wrong_class_0 = df_wrong[df_wrong["actual"] == 0]
     # y: not blond; pred: blond
-    df_wrong_class_1 = df_wrong[df_wrong["actual"] == 1]
+    df_wrong_class_0 = df_wrong[df_wrong["target"] == 0]
+    # y: blond; pred: not blond
+    df_wrong_class_1 = df_wrong[df_wrong["target"] == 1]
 
+    # y: not blond; pred: not blond
+    df_correct_class_0 = df_correct[df_correct["target"] == 0]
     # y: blond; pred: blond
-    df_correct_class_0 = df_correct[df_correct["actual"] == 0]
-    # y: blond; pred: blond
-    df_correct_class_1 = df_correct[df_correct["actual"] == 1]
+    df_correct_class_1 = df_correct[df_correct["target"] == 1]
 
     caption_wrong_class_0 = " ".join(df_wrong_class_0["caption"].tolist())
     caption_wrong_class_1 = " ".join(df_wrong_class_1["caption"].tolist())
@@ -111,23 +115,51 @@ def main(model_path, extract_captions):
     keywords_wrong_class_1 = extract_keywords(caption_wrong_class_1)
 
     # compute `clip score`
+    kwargs = dict(device=device, clip_weights_path="./data/weights/")
     score_wrong_class_0 = clip_score(
-        image_dir, df_wrong_class_0["filename"], keywords_wrong_class_0
+        image_dir,
+        df_wrong_class_0["filename"],
+        keywords_wrong_class_0,
+        **kwargs,
     )
     score_wrong_class_1 = clip_score(
-        image_dir, df_wrong_class_1["filename"], keywords_wrong_class_1
+        image_dir,
+        df_wrong_class_1["filename"],
+        keywords_wrong_class_1,
+        **kwargs,
     )
 
     score_correct_class_0 = clip_score(
-        image_dir, df_correct_class_0["filename"], keywords_wrong_class_0
+        image_dir,
+        df_correct_class_0["filename"],
+        keywords_wrong_class_0,
+        **kwargs,
     )
     score_correct_class_1 = clip_score(
-        image_dir, df_correct_class_1["filename"], keywords_wrong_class_1
+        image_dir,
+        df_correct_class_1["filename"],
+        keywords_wrong_class_1,
+        **kwargs,
     )
 
     cs_class_0 = score_wrong_class_0 - score_correct_class_0
     cs_class_1 = score_wrong_class_1 - score_correct_class_1
-    print(cs_class_0, cs_class_1)
+
+    # saving results
+    df = pd.DataFrame(
+        columns=[
+            "class_0/keyword",
+            "class_0/clip",
+            "class_1/keyword",
+            "class_1/clip",
+        ],
+    )
+
+    df["class_0/keyword"] = keywords_wrong_class_0
+    df["class_0/clip"] = cs_class_0.cpu().numpy()
+    df["class_1/keyword"] = keywords_wrong_class_1
+    df["class_1/clip"] = cs_class_1.cpu().numpy()
+    df.to_csv(df_results2_path)
 
 
 if __name__ == "__main__":

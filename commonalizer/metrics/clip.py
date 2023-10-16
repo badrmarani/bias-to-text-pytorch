@@ -21,7 +21,7 @@ def clip_score(root, filenames, keywords, device, clip_weights_path):
 
     similarity_list = []
 
-    batchs = [images[i, i + 2000] for i in range(0, len(images), 2000)]
+    batchs = [images[i : i + 2000] for i in range(0, len(images), 2000)]
     for batch in tqdm(batchs):
         # prepare the inputs
         image_inputs = torch.cat(
