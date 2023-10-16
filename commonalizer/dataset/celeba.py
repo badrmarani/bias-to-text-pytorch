@@ -18,7 +18,7 @@ class CelebA(data.Dataset):
         super(CelebA, self).__init__()
 
         self.root = root
-        split_type = dict(train=0, valid=1, test=2)
+        split = dict(train=0, valid=1, test=2).get(split, 0)
 
         list_attr_celeba = pd.read_csv(
             os.path.join(root, "list_attr_celeba.csv"),
@@ -36,7 +36,7 @@ class CelebA(data.Dataset):
 
         list_attr_celeba["partition"] = list_eval_partition
         list_attr_celeba = list_attr_celeba[
-            list_attr_celeba["partition"] == split_type[split]
+            list_attr_celeba["partition"] == split
         ]
 
         # get the targets
