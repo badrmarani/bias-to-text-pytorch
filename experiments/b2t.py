@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 from commonalizer import seed_everything
 from commonalizer.clip_prefix_captioning_inference import extract_caption
-from commonalizer.dataset import CelebA
+from commonalizer.dataset import CelebA, Waterbirds
 from commonalizer.keywords import extract_keywords
 from commonalizer.metrics.clip import clip_score
 
@@ -19,26 +19,31 @@ warnings.filterwarnings("ignore", category=SourceChangeWarning)
 
 @seed_everything(42)
 @torch.no_grad()
-def main(model_path, extract_captions):
+def main(
+    classification_model_path: str, extract_captions: bool, dataset_name: str
+):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    val_dataset = CelebA(root="data/celeba/", split="valid")
+    if dataset_name == "celeba":
+        root = "data/images/celeba/"
+        val_dataset = CelebA(root=root, split="valid")
+    elif dataset_name == "waterbirds":
+        root = "data/images/waterbirds/"
+        val_dataset = Waterbirds(root=root, split="valid")
+
     val_dataloader = utils.data.DataLoader(
-        dataset=val_dataset,
-        batch_size=128,
+        dataset_name=val_dataset,
+        batch_size=2**8,  # 2**8 == 256
         num_workers=4,
         drop_last=False,
     )
 
-    image_dir = "./data/celeba/img_align_celeba/"
-    results_dir = "results/b2t/celeba_blond_male/"
-    df_results1_path = os.path.join(results_dir, "b2t_celeba_blond_male.csv")
-    df_results2_path = os.path.join(
-        results_dir, "b2t_celeba_blond_clipscore.csv"
-    )
+    images_dir = val_dataloader.root
+    results_dir = os.path.join("data/results/b2t/", f"{dataset_name}/")
 
-    if not os.path.exists(df_results1_path):
-        model = torch.load(model_path, map_location=device)
+    f = os.path.join(results_dir, "summary.csv")
+    if not os.path.exists(f):
+        model = torch.load(classification_model_path, map_location=device)
         model.eval()
 
         df = pd.DataFrame(
@@ -75,7 +80,7 @@ def main(model_path, extract_captions):
 
                 caption = None
                 if extract_captions:
-                    abs_filename_path = os.path.join(image_dir, filenames[i])
+                    abs_filename_path = os.path.join(images_dir, filenames[i])
                     caption = extract_caption(abs_filename_path)
 
                 df.loc[len(df.index)] = dict(
@@ -89,10 +94,10 @@ def main(model_path, extract_captions):
                 )
 
         os.makedirs(results_dir, exist_ok=True)
-        df.to_csv(df_results1_path)
+        df.to_csv(f)
 
     else:
-        df = pd.read_csv(df_results1_path, index_col=0)
+        df = pd.read_csv(f, index_col=0)
 
     # extract keywords
     df_correct = df[df["correct"] == 0]
@@ -115,28 +120,28 @@ def main(model_path, extract_captions):
     keywords_wrong_class_1 = extract_keywords(caption_wrong_class_1)
 
     # compute `clip score`
-    kwargs = dict(device=device, clip_weights_path="./data/weights/")
+    kwargs = dict(device=device, clip_weights_path="./data/pretrained_models/")
     score_wrong_class_0 = clip_score(
-        image_dir,
+        images_dir,
         df_wrong_class_0["filename"],
         keywords_wrong_class_0,
         **kwargs,
     )
     score_wrong_class_1 = clip_score(
-        image_dir,
+        images_dir,
         df_wrong_class_1["filename"],
         keywords_wrong_class_1,
         **kwargs,
     )
 
     score_correct_class_0 = clip_score(
-        image_dir,
+        images_dir,
         df_correct_class_0["filename"],
         keywords_wrong_class_0,
         **kwargs,
     )
     score_correct_class_1 = clip_score(
-        image_dir,
+        images_dir,
         df_correct_class_1["filename"],
         keywords_wrong_class_1,
         **kwargs,
@@ -159,13 +164,18 @@ def main(model_path, extract_captions):
     df["class_0/clip"] = cs_class_0.cpu().numpy()
     df["class_1/keyword"] = keywords_wrong_class_1
     df["class_1/clip"] = cs_class_1.cpu().numpy()
-    df.to_csv(df_results2_path)
+    df.to_csv(os.path.join(results_dir, "summary_clip_score.csv"))
 
 
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument(
-        "--model_path", type=str, default="data/weights/best_model.pth"
+        "--classification_model_path",
+        type=str,
+        default="data/pretrained_models/clf_resnet_erm_celeba.pth",
+    )
+    parser.add_argument(
+        "--dataset_name", type=str, choice=["celeba", "waterbirds"]
     )
     parser.add_argument("--extract_captions", type=bool, default=True)
 

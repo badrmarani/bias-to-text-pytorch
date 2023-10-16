@@ -11,7 +11,7 @@ files = {
         ("15kSeADU-yyIIqAMh8T40P1AYRTWpISrc", "b2t_celeba_blond_male.csv"),
     ],
     "pretrained_models": [
-        ("1Ue8knFLZyePu36U22z4M7bB1eh-tVpX4", "best_model.pth"),
+        ("1Ue8knFLZyePu36U22z4M7bB1eh-tVpX4", "clf_resnet_erm_celeba.pth"),
         ("1XsVzNBo_jW_ZTDN4rrgLia0zTWaEaPh6", "clipcap_coco_weights.pth"),
         ("1qQkq3zpgONNUogyi8GGIWLGQ8r_mnuNj", "clipcap_conceptual_weights.pth"),
     ],

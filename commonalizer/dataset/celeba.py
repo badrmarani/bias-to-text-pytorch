@@ -17,7 +17,7 @@ class CelebA(data.Dataset):
     ) -> None:
         super(CelebA, self).__init__()
 
-        self.root = root
+        self.root = os.path.join(root, "img_align_celeba/")
         split = dict(train=0, valid=1, test=2).get(split, 0)
 
         list_attr_celeba = pd.read_csv(
@@ -75,7 +75,7 @@ class CelebA(data.Dataset):
 
     def __getitem__(self, index):
         filename = self.filenames[index]
-        image_filename = os.path.join(self.root, "img_align_celeba", filename)
+        image_filename = os.path.join(self.root, filename)
         input = Image.open(image_filename).convert("RGB")
         input = self.transform(input)
         target = self.targets[index]
