@@ -5,17 +5,27 @@ from torchvision.datasets import utils
 
 os.environ["CURL_CA_BUNDLE"] = ""
 
-file_list = [
-    # file id, md5 hash, filename
-    ("15kSeADU-yyIIqAMh8T40P1AYRTWpISrc", None, "b2t_celeba_blond_male.csv"),
-]
+# file id, filename
+files = dict(
+    b2t_blond=[
+        ("15kSeADU-yyIIqAMh8T40P1AYRTWpISrc", "b2t_celeba_blond_male.csv"),
+    ],
+    pretrained_models=[
+        ("1Ue8knFLZyePu36U22z4M7bB1eh-tVpX4", "best_model.pth"),
+        ("1XsVzNBo_jW_ZTDN4rrgLia0zTWaEaPh6", "clipcap_coco_weights.pth"),
+        ("1qQkq3zpgONNUogyi8GGIWLGQ8r_mnuNj", "clipcap_conceptual_weights.pth"),
+    ],
+    celeba=[
+        ("1kDqtHZHpYMe7rt1zu9pOevzUbApkDNRa", "list_eval_partition.csv"),
+        ("1s8CyrddcxHdvwro-_M25H7uxsDWL_1Bs", "list_attr_celeba.csv"),
+        ("1mGM-w9373aW5UJ27xa5oAsesL06JOe3h", "img_align_celeba.zip"),
+    ],
+)
 
-base_folder = "results/"
 
-
-def _check_integrity(root, file_list) -> bool:
-    for _, md5, filename in file_list:
-        fpath = os.path.join(root, base_folder, filename)
+def _check_integrity(root, type) -> bool:
+    for _, md5, filename in files:
+        fpath = os.path.join(root, type, filename)
         _, ext = os.path.splitext(filename)
         # Allow original archive to be deleted (zip and 7z)
         # Only need the extracted images
@@ -23,20 +33,26 @@ def _check_integrity(root, file_list) -> bool:
             return False
 
 
-def download(root) -> None:
-    if _check_integrity(root, file_list):
+def download(root, type) -> None:
+    if _check_integrity(root, type):
         print("Files already downloaded and verified")
         return
 
-    for file_id, md5, filename in file_list:
+    for file_id, filename in files:
         utils.download_file_from_google_drive(
-            file_id, os.path.join(root, base_folder), filename, md5
+            file_id, os.path.join(root, type), filename
         )
+
+    if type == "celeba":
+        f = os.path.join(root, type, "img_align_celeba.zip")
+        if os.path.exists(f):
+            utils.extract_archive(f)
 
 
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--root", type=str, default="./data/")
+    parser.add_argument("--type", type=str, required=True, choices=files.keys())
     args = parser.parse_args()
 
     download(**vars(args))
