@@ -15,6 +15,9 @@ files = {
         ("1XsVzNBo_jW_ZTDN4rrgLia0zTWaEaPh6", "clipcap_coco_weights.pth"),
         ("1qQkq3zpgONNUogyi8GGIWLGQ8r_mnuNj", "clipcap_conceptual_weights.pth"),
     ],
+    "images/waterbirds": [
+        ("14k6fRRCKxCTqJ4HWe0EvwUtBEHclW_WT", "waterbirds.tar"),
+    ],
     "images/celeba": [
         ("1kDqtHZHpYMe7rt1zu9pOevzUbApkDNRa", "list_eval_partition.csv"),
         ("1s8CyrddcxHdvwro-_M25H7uxsDWL_1Bs", "list_attr_celeba.csv"),
@@ -24,12 +27,12 @@ files = {
 
 
 def _check_integrity(root, type) -> bool:
-    for _, md5, filename in files:
+    for _, filename in files.get(type):
         fpath = os.path.join(root, type, filename)
         _, ext = os.path.splitext(filename)
         # Allow original archive to be deleted (zip and 7z)
         # Only need the extracted images
-        if ext not in [".zip", ".7z"] and not utils.check_integrity(fpath, md5):
+        if ext not in [".zip", ".7z"] and not utils.check_integrity(fpath):
             return False
 
 
@@ -38,13 +41,17 @@ def download(root, type) -> None:
         print("Files already downloaded and verified")
         return
 
-    for file_id, filename in files:
+    for file_id, filename in files.get(type):
         utils.download_file_from_google_drive(
             file_id, os.path.join(root, type), filename
         )
 
-    if type == "celeba":
+    if type == "images/celeba":
         f = os.path.join(root, type, "img_align_celeba.zip")
+        if os.path.exists(f):
+            utils.extract_archive(f)
+    elif type == "images/waterbirds":
+        f = os.path.join(root, type, "waterbirds.tar")
         if os.path.exists(f):
             utils.extract_archive(f)
 

@@ -18,6 +18,12 @@ To install the environment, run : `poetry install`. Finally, to activate the vir
     python scripts/download.py --root="./data/" --type="images/celeba"
     ```
 
+- Download Waterbirds
+
+    ```bash
+    python scripts/download.py --root="./data/" --type="images/waterbirds"
+    ```
+
 - Download pretrained checkpoints of CelebA
 
     ```bash
