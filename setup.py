@@ -1,4 +1,3 @@
-#! /usr/bin/env python
 # flake8: noqa
 from setuptools import find_packages, setup
 
@@ -17,6 +16,8 @@ setup(
         "ftfy=^6.1.1",
         "clip=git+https://github.com/openai/CLIP.git",
         "scikit-image=^0.22.0",
+        "numpy=^1.26.1",
+        "yake=^0.4.8",
     ],
     packages=find_packages(),
 )
