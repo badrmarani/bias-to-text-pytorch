@@ -1,8 +1,6 @@
 import os
-import random
 import warnings
 from argparse import ArgumentParser
-from contextlib import contextmanager
 
 import pandas as pd
 import torch
@@ -10,28 +8,13 @@ from torch import utils
 from torch.serialization import SourceChangeWarning
 from tqdm import tqdm
 
-import numpy as np
+from commonalizer import seed_everything
+from commonalizer.clip_prefix_captioning_inference import extract_caption
 from commonalizer.dataset import CelebA
 from commonalizer.keywords import extract_keywords
-from commonalizer.utils.clip_prefix_captioning_inference import extract_caption
+from commonalizer.metrics.clip import clip_score
 
 warnings.filterwarnings("ignore", category=SourceChangeWarning)
-
-
-@contextmanager
-def seed_everything(seed=42):
-    random.seed(seed)
-    np.random.default_rng(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed(seed)
-        torch.cuda.manual_seed_all(seed)
-        torch.backends.cudnn.deterministic = True
-        torch.backends.cudnn.benchmark = False
-        torch.backends.cudnn.enabled = True
-    yield
 
 
 @seed_everything(42)
@@ -47,6 +30,7 @@ def main(model_path, extract_captions):
         drop_last=False,
     )
 
+    image_dir = "./data/celeba/img_align_celeba/"
     results_dir = "results/b2t/celeba_blond_male/"
     df_results_path = os.path.join(results_dir, "b2t_celeba_blond_male.csv")
 
@@ -59,6 +43,7 @@ def main(model_path, extract_captions):
                 "filename",
                 "target",
                 "prediction",
+                "correct",
                 "group",
                 "confounder",
                 "caption",
@@ -86,9 +71,7 @@ def main(model_path, extract_captions):
 
                 caption = None
                 if extract_captions:
-                    abs_filename_path = os.path.join(
-                        "./data/celeba/img_align_celeba/", filenames[i]
-                    )
+                    abs_filename_path = os.path.join(image_dir, filenames[i])
                     caption = extract_caption(abs_filename_path)
 
                 df.loc[len(df.index)] = dict(
@@ -105,9 +88,10 @@ def main(model_path, extract_captions):
         df.to_csv(df_results_path)
 
     else:
-        df = pd.read_csv(df_results_path)
+        df = pd.read_csv(df_results_path, index_col=0)
 
     # extract keywords
+    df_correct = df[df["correct"] == 0]
     df_wrong = df[df["correct"] == 1]
 
     # y: blond; pred: not blond
@@ -115,11 +99,35 @@ def main(model_path, extract_captions):
     # y: not blond; pred: blond
     df_wrong_class_1 = df_wrong[df_wrong["actual"] == 1]
 
+    # y: blond; pred: blond
+    df_correct_class_0 = df_correct[df_correct["actual"] == 0]
+    # y: blond; pred: blond
+    df_correct_class_1 = df_correct[df_correct["actual"] == 1]
+
     caption_wrong_class_0 = " ".join(df_wrong_class_0["caption"].tolist())
     caption_wrong_class_1 = " ".join(df_wrong_class_1["caption"].tolist())
 
-    print(extract_keywords(caption_wrong_class_0))
-    print(extract_keywords(caption_wrong_class_1))
+    keywords_wrong_class_0 = extract_keywords(caption_wrong_class_0)
+    keywords_wrong_class_1 = extract_keywords(caption_wrong_class_1)
+
+    # compute `clip score`
+    score_wrong_class_0 = clip_score(
+        image_dir, df_wrong_class_0["filename"], keywords_wrong_class_0
+    )
+    score_wrong_class_1 = clip_score(
+        image_dir, df_wrong_class_1["filename"], keywords_wrong_class_1
+    )
+
+    score_correct_class_0 = clip_score(
+        image_dir, df_correct_class_0["filename"], keywords_wrong_class_0
+    )
+    score_correct_class_1 = clip_score(
+        image_dir, df_correct_class_1["filename"], keywords_wrong_class_1
+    )
+
+    cs_class_0 = score_wrong_class_0 - score_correct_class_0
+    cs_class_1 = score_wrong_class_1 - score_correct_class_1
+    print(cs_class_0, cs_class_1)
 
 
 if __name__ == "__main__":
