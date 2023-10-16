@@ -6,21 +6,21 @@ from torchvision.datasets import utils
 os.environ["CURL_CA_BUNDLE"] = ""
 
 # file id, filename
-files = dict(
-    b2t_blond=[
+files = {
+    "results/b2t_blond": [
         ("15kSeADU-yyIIqAMh8T40P1AYRTWpISrc", "b2t_celeba_blond_male.csv"),
     ],
-    pretrained_models=[
+    "pretrained_models": [
         ("1Ue8knFLZyePu36U22z4M7bB1eh-tVpX4", "best_model.pth"),
         ("1XsVzNBo_jW_ZTDN4rrgLia0zTWaEaPh6", "clipcap_coco_weights.pth"),
         ("1qQkq3zpgONNUogyi8GGIWLGQ8r_mnuNj", "clipcap_conceptual_weights.pth"),
     ],
-    celeba=[
+    "images/celeba": [
         ("1kDqtHZHpYMe7rt1zu9pOevzUbApkDNRa", "list_eval_partition.csv"),
         ("1s8CyrddcxHdvwro-_M25H7uxsDWL_1Bs", "list_attr_celeba.csv"),
         ("1mGM-w9373aW5UJ27xa5oAsesL06JOe3h", "img_align_celeba.zip"),
     ],
-)
+}
 
 
 def _check_integrity(root, type) -> bool:
