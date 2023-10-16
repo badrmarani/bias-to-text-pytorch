@@ -12,6 +12,7 @@ from tqdm import tqdm
 
 import numpy as np
 from commonalizer.dataset import CelebA
+from commonalizer.keywords import extract_keywords
 from commonalizer.utils.clip_prefix_captioning_inference import extract_caption
 
 warnings.filterwarnings("ignore", category=SourceChangeWarning)
@@ -105,6 +106,20 @@ def main(model_path, extract_captions):
 
     else:
         df = pd.read_csv(df_results_path)
+
+    # extract keywords
+    df_wrong = df[df["correct"] == 1]
+
+    # y: blond; pred: not blond
+    df_wrong_class_0 = df_wrong[df_wrong["actual"] == 0]
+    # y: not blond; pred: blond
+    df_wrong_class_1 = df_wrong[df_wrong["actual"] == 1]
+
+    caption_wrong_class_0 = " ".join(df_wrong_class_0["caption"].tolist())
+    caption_wrong_class_1 = " ".join(df_wrong_class_1["caption"].tolist())
+
+    print(extract_keywords(caption_wrong_class_0))
+    print(extract_keywords(caption_wrong_class_1))
 
 
 if __name__ == "__main__":
