@@ -4,7 +4,7 @@ import clip
 import skimage.io as io
 import torch
 from PIL import Image
-from tqdm import tqdm
+from tqdm import trange
 
 from .. import seed_everything
 
@@ -21,18 +21,19 @@ def clip_score(root, filenames, keywords, device, clip_weights_path):
 
     similarity_list = []
 
-    batchs = [images[i : i + 2000] for i in range(0, len(images), 2000)]
-    for batch in tqdm(batchs):
+    # batchs = [images[i : i + 2000] for i in range(0, len(images), 2000)]
+    num_steps = len(images) // 10 if len(images) > 10 else len(images)
+    for i in trange(0, len(images), num_steps):
+        batch = images[i : i + num_steps]
+
         # prepare the inputs
         image_inputs = torch.cat(
             [preprocess(pil_image).unsqueeze(0) for pil_image in batch]
-        ).to(
-            device
-        )  # (1909, 3, 224, 224)
+        ).to(device=device)
 
         text_inputs = torch.cat(
             [clip.tokenize(f"a photo of a {c}") for c in keywords]
-        ).to(device)
+        ).to(device=device)
 
         # compute features
         image_features = clip_model.encode_image(image_inputs)
@@ -47,21 +48,3 @@ def clip_score(root, filenames, keywords, device, clip_weights_path):
     similarity = torch.cat(similarity_list).mean(dim=0)
 
     return similarity
-
-
-if __name__ == "__main__":
-    import pandas as pd
-
-    clip_weights_path = "./data/weights/"
-    image_dir = "./data/celeba/img_align_celeba/"
-
-    df = pd.DataFrame(columns=["filename", "keyword"])
-    df[len(df.index)] = dict(filename="174909.jpg", keywords="bla bla")
-
-    device = torch.device("cpu")
-
-    x = clip_score(
-        image_dir, df["filename"], df["keyword"], device, clip_weights_path
-    )
-
-    print(x)
