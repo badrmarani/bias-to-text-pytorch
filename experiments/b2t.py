@@ -181,13 +181,13 @@ if __name__ == "__main__":
         default="data/pretrained_models/clf_resnet_erm_celeba.pth",
     )
     parser.add_argument(
-        "--dataset_name", type=str, choice=["celeba", "waterbirds"]
+        "--dataset_name", type=str, choices=["celeba", "waterbirds"]
     )
     parser.add_argument("--extract_captions", type=bool, default=True)
     parser.add_argument(
         "--captioning_model",
         type=str,
-        choice=["clipcap", "git"],
+        choices=["clipcap", "git"],
         default="clipcap",
     )
 
