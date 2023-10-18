@@ -20,7 +20,10 @@ warnings.filterwarnings("ignore", category=SourceChangeWarning)
 @seed_everything(42)
 @torch.no_grad()
 def main(
-    classification_model_path: str, extract_captions: bool, dataset_name: str
+    classification_model_path: str,
+    captioning_model: str,
+    extract_captions: bool,
+    dataset_name: str,
 ):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -40,6 +43,7 @@ def main(
 
     images_dir = val_dataloader.root
     results_dir = os.path.join("data/results/b2t/", f"{dataset_name}/")
+    os.makedirs(results_dir, exist_ok=True)
 
     f = os.path.join(results_dir, "summary.csv")
     if not os.path.exists(f):
@@ -81,7 +85,10 @@ def main(
                 caption = None
                 if extract_captions:
                     abs_filename_path = os.path.join(images_dir, filenames[i])
-                    caption = extract_caption(abs_filename_path)
+                    if captioning_model == "clipcap":
+                        caption = extract_caption(abs_filename_path)
+                    elif captioning_model == "git":
+                        raise NotImplementedError
 
                 df.loc[len(df.index)] = dict(
                     filename=filenames[i],
@@ -93,8 +100,7 @@ def main(
                     caption=caption,
                 )
 
-        os.makedirs(results_dir, exist_ok=True)
-        df.to_csv(f)
+                df.to_csv(f)
 
     else:
         df = pd.read_csv(f, index_col=0)
@@ -154,17 +160,17 @@ def main(
     df = pd.DataFrame(
         columns=[
             "class_0/keyword",
-            "class_0/clip",
+            "class_0/score",
             "class_1/keyword",
-            "class_1/clip",
+            "class_1/score",
         ],
     )
 
     df["class_0/keyword"] = keywords_wrong_class_0
-    df["class_0/clip"] = cs_class_0.cpu().numpy()
+    df["class_0/score"] = cs_class_0.cpu().numpy()
     df["class_1/keyword"] = keywords_wrong_class_1
-    df["class_1/clip"] = cs_class_1.cpu().numpy()
-    df.to_csv(os.path.join(results_dir, "summary_clip_score.csv"))
+    df["class_1/score"] = cs_class_1.cpu().numpy()
+    df.to_csv(os.path.join(results_dir, "summary_score.csv"))
 
 
 if __name__ == "__main__":
@@ -178,6 +184,9 @@ if __name__ == "__main__":
         "--dataset_name", type=str, choice=["celeba", "waterbirds"]
     )
     parser.add_argument("--extract_captions", type=bool, default=True)
+    parser.add_argument(
+        "--captioning_model", type=str, choices=["clipcap", "git"]
+    )
 
     args = parser.parse_args()
     main(**vars(args))
