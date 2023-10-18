@@ -35,13 +35,13 @@ def main(
         val_dataset = Waterbirds(root=root, split="valid")
 
     val_dataloader = utils.data.DataLoader(
-        dataset_name=val_dataset,
+        val_dataset,
         batch_size=2**8,  # 2**8 == 256
         num_workers=4,
         drop_last=False,
     )
 
-    images_dir = val_dataloader.root
+    images_dir = val_dataset.root
     results_dir = os.path.join("data/results/b2t/", f"{dataset_name}/")
     os.makedirs(results_dir, exist_ok=True)
 
@@ -90,15 +90,16 @@ def main(
                     elif captioning_model == "git":
                         raise NotImplementedError
 
-                df.loc[len(df.index)] = dict(
-                    filename=filenames[i],
-                    target=targets[i].item(),
-                    prediction=predictions[i].item(),
-                    correct=correct[i].item(),
-                    group=targets_groups[i].item(),
-                    confounder=targets_confounder[i].item(),
-                    caption=caption,
-                )
+                df.loc[len(df.index)] = {
+                    "filename": filenames[i],
+                    "target": targets[i].item(),
+                    "prediction": predictions[i].item(),
+                    "correct": correct[i].item(),
+                    "group": targets_groups[i].item(),
+                    "confounder": targets_confounder[i].item(),
+                    "caption/clipcap": caption,
+                    "caption/git": None,
+                }
 
                 df.to_csv(f)
 
@@ -192,4 +193,5 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    main(**vars(args))
+    print(vars(args))
+    # main(**vars(args))
