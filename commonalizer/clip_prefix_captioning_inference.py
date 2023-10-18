@@ -286,7 +286,7 @@ def generate2(
 
 # @title CLIP model + GPT2 tokenizer
 
-save_path = os.path.abspath("data/weights/")
+save_path = os.path.abspath("data/pretrained_models/")
 os.makedirs(save_path, exist_ok=True)
 
 device = CUDA
