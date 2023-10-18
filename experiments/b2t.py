@@ -187,7 +187,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--captioning_model",
         type=str,
-        choices=["clipcap", "git"],
+        choice=["clipcap", "git"],
         default="clipcap",
     )
 
