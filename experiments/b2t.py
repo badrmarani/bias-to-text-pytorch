@@ -120,8 +120,12 @@ def main(
     # y: blond; pred: blond
     df_correct_class_1 = df_correct[df_correct["target"] == 1]
 
-    caption_wrong_class_0 = " ".join(df_wrong_class_0["caption"].tolist())
-    caption_wrong_class_1 = " ".join(df_wrong_class_1["caption"].tolist())
+    caption_wrong_class_0 = " ".join(
+        df_wrong_class_0[f"caption/{captioning_model}"].tolist()
+    )
+    caption_wrong_class_1 = " ".join(
+        df_wrong_class_1[f"caption/{captioning_model}"].tolist()
+    )
 
     keywords_wrong_class_0 = extract_keywords(caption_wrong_class_0)
     keywords_wrong_class_1 = extract_keywords(caption_wrong_class_1)
