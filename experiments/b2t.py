@@ -185,7 +185,10 @@ if __name__ == "__main__":
     )
     parser.add_argument("--extract_captions", type=bool, default=True)
     parser.add_argument(
-        "--captioning_model", type=str, choices=["clipcap", "git"]
+        "--captioning_model",
+        type=str,
+        choices=["clipcap", "git"],
+        default="clipcap",
     )
 
     args = parser.parse_args()
