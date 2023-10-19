@@ -9,12 +9,33 @@ from torch.serialization import SourceChangeWarning
 from tqdm import tqdm
 
 from commonalizer import seed_everything
-from commonalizer.clip_prefix_captioning_inference import extract_caption
+from commonalizer.captions import extract_caption
 from commonalizer.dataset import CelebA, Waterbirds
 from commonalizer.keywords import extract_keywords
-from commonalizer.metrics.clip import clip_score
+from commonalizer.metrics import clip_score
 
 warnings.filterwarnings("ignore", category=SourceChangeWarning)
+
+
+def clip_score_wrapper(images_dir, df_wrong, df_correct, keywords, **kwargs):
+    if df_wrong.empty or df_correct.empty:
+        score = torch.tensor([0.0])  # we can't decide
+    else:
+        score_wrong_class_0 = clip_score(
+            images_dir,
+            df_wrong["filename"],
+            keywords,
+            **kwargs,
+        )
+        score_correct_class_0 = clip_score(
+            images_dir,
+            df_correct["filename"],
+            keywords,
+            **kwargs,
+        )
+        score = score_wrong_class_0 - score_correct_class_0
+
+    return score
 
 
 @seed_everything(42)
@@ -85,10 +106,9 @@ def main(
                 caption = None
                 if extract_captions:
                     abs_filename_path = os.path.join(images_dir, filenames[i])
-                    if captioning_model == "clipcap":
-                        caption = extract_caption(abs_filename_path)
-                    elif captioning_model == "git":
-                        raise NotImplementedError
+                    caption = extract_caption(abs_filename_path, "clipcap")
+                    if captioning_model == "git":
+                        caption_git = extract_caption(abs_filename_path, "git")
 
                 df.loc[len(df.index)] = {
                     "filename": filenames[i],
@@ -98,7 +118,7 @@ def main(
                     "group": targets_groups[i].item(),
                     "confounder": targets_confounder[i].item(),
                     "caption/clipcap": caption,
-                    "caption/git": None,
+                    "caption/git": caption_git,
                 }
 
                 df.to_csv(f)
@@ -120,71 +140,81 @@ def main(
     # y: blond; pred: blond
     df_correct_class_1 = df_correct[df_correct["target"] == 1]
 
-    caption_wrong_class_0 = " ".join(
-        df_wrong_class_0[f"caption/{captioning_model}"].tolist()
-    )
-    caption_wrong_class_1 = " ".join(
-        df_wrong_class_1[f"caption/{captioning_model}"].tolist()
-    )
+    caption_class_0 = " ".join(df_wrong_class_0["caption/clipcap"].tolist())
+    caption_class_1 = " ".join(df_wrong_class_1["caption/clipcap"].tolist())
+    keywords_class_0 = extract_keywords(caption_class_0)
+    keywords_class_1 = extract_keywords(caption_class_1)
 
-    keywords_wrong_class_0 = extract_keywords(caption_wrong_class_0)
-    keywords_wrong_class_1 = extract_keywords(caption_wrong_class_1)
+    if captioning_model == "git":
+        caption_git_class_0 = " ".join(
+            df_wrong_class_0[f"caption/{captioning_model}"].tolist()
+        )
+        caption_git_class_1 = " ".join(
+            df_wrong_class_1[f"caption/{captioning_model}"].tolist()
+        )
+        keywords_git_class_0 = extract_keywords(caption_git_class_0)
+        keywords_git_class_1 = extract_keywords(caption_git_class_1)
 
     # compute `clip score`
     kwargs = dict(device=device, clip_weights_path="./data/pretrained_models/")
 
-    if df_wrong_class_0.empty or df_correct_class_0.empty:
-        cs_class_0 = torch.tensor([0.0])  # we can't decide
-    else:
-        score_wrong_class_0 = clip_score(
-            images_dir,
-            df_wrong_class_0["filename"],
-            keywords_wrong_class_0,
-            **kwargs,
-        )
-        score_correct_class_0 = clip_score(
-            images_dir,
-            df_correct_class_0["filename"],
-            keywords_wrong_class_0,
-            **kwargs,
-        )
-        cs_class_0 = score_wrong_class_0 - score_correct_class_0
+    score_class_0 = clip_score_wrapper(
+        images_dir,
+        df_wrong_class_0,
+        df_correct_class_0,
+        keywords_class_0,
+        **kwargs,
+    )
+    score_class_1 = clip_score_wrapper(
+        images_dir,
+        df_wrong_class_1,
+        df_correct_class_1,
+        keywords_class_1,
+        **kwargs,
+    )
 
-    if df_wrong_class_1.empty or df_correct_class_1.empty:
-        cs_class_1 = torch.tensor([0.0])  # we can't decide
-    else:
-        score_wrong_class_1 = clip_score(
+    if captioning_model == "git":
+        git_score_class_0 = clip_score_wrapper(
             images_dir,
-            df_wrong_class_1["filename"],
-            keywords_wrong_class_1,
+            df_wrong_class_0,
+            df_correct_class_0,
+            keywords_git_class_0,
             **kwargs,
         )
-        score_correct_class_1 = clip_score(
+        git_score_class_1 = clip_score_wrapper(
             images_dir,
-            df_correct_class_1["filename"],
-            keywords_wrong_class_1,
+            df_wrong_class_1,
+            df_correct_class_1,
+            keywords_git_class_1,
             **kwargs,
         )
-        cs_class_1 = score_wrong_class_1 - score_correct_class_1
 
     # saving results
     df = pd.DataFrame(
         columns=[
-            "class_0/keyword",
-            "class_0/score",
-            "class_1/keyword",
-            "class_1/score",
+            "class_0/clipcap_keyword",
+            "class_0/clip_score",
+            "class_1/clipcap_keyword",
+            "class_1/clip_score",
+            "class_0/git_keyword",
+            "class_0/clip_score",
+            "class_1/git_keyword",
+            "class_1/clip_score",
         ],
     )
-    # df = pd.DataFrame()
 
-    if len(keywords_wrong_class_0):
-        df["class_0/keyword"] = keywords_wrong_class_0
-        df["class_0/score"] = cs_class_0.cpu().numpy()
-
-    if len(keywords_wrong_class_1):
-        df["class_1/keyword"] = keywords_wrong_class_1
-        df["class_1/score"] = cs_class_1.cpu().numpy()
+    if len(keywords_class_0):
+        df["class_0/keyword"] = keywords_class_0
+        df["class_0/score"] = score_class_0.cpu().numpy()
+    if len(keywords_git_class_0):
+        df["class_0/git_keyword"] = keywords_git_class_0
+        df["class_0/git_score"] = git_score_class_0.cpu().numpy()
+    if len(keywords_class_1):
+        df["class_1/keyword"] = keywords_class_1
+        df["class_1/score"] = score_class_1.cpu().numpy()
+    if len(keywords_git_class_1):
+        df["class_1/git_keyword"] = keywords_git_class_1
+        df["class_1/git_score"] = git_score_class_1.cpu().numpy()
 
     df.to_csv(os.path.join(results_dir, "summary_score.csv"))
 
