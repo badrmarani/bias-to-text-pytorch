@@ -9,6 +9,10 @@ files = {
     "results/b2t_blond": [
         ("15kSeADU-yyIIqAMh8T40P1AYRTWpISrc", "b2t_celeba_blond_male.csv"),
     ],
+    "results/b2t/waterbirds": [
+        ("1R6CgA3nvhTmj0wLsxjZxIeBJBQcfj49r", "summary.csv"),
+        ("1BybWIcC0040kXvMWk5Q8rdz9MoI-yIBl", "summary_score.csv"),
+    ],
     "pretrained_models": [
         ("1Ue8knFLZyePu36U22z4M7bB1eh-tVpX4", "clf_resnet_erm_celeba.pth"),
         ("1Ue8knFLZyePu36U22z4M7bB1eh-tVpX4", "clf_resnet_erm_waterbirds.pth"),
