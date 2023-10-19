@@ -26,9 +26,9 @@ def git_score(root, filenames, keywords, device, git_weights_path):
     images = [os.path.join(root, f) for f in filenames]
     images = [Image.fromarray(io.imread(im)) for im in images]
 
-    processor = AutoProcessor.from_pretrained("microsoft/git-base")
-    model = AutoModel.from_pretrained("microsoft/git-base")
-    tokenizer = AutoTokenizer.from_pretrained("microsoft/git-base")
+    processor = AutoProcessor.from_pretrained("microsoft/git-base-coco")
+    model = AutoModel.from_pretrained("microsoft/git-base-coco")
+    tokenizer = AutoTokenizer.from_pretrained("microsoft/git-base-coco")
 
     similarity_list = []
 

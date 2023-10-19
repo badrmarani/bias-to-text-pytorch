@@ -286,43 +286,43 @@ def generate2(
 
 # @title CLIP model + GPT2 tokenizer
 
-save_path = os.path.abspath("data/pretrained_models/")
-os.makedirs(save_path, exist_ok=True)
 
-device = CUDA
-clip_model, preprocess = clip.load(
-    "ViT-B/32",
-    device=device,
-    download_root=save_path,
-)
-tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
+@torch.no_grad()
+def extract_caption_clipcap(image_path):
+    save_path = os.path.abspath("data/pretrained_models/")
+    os.makedirs(save_path, exist_ok=True)
 
-# @title Load model weights
+    device = CUDA
+    clip_model, preprocess = clip.load(
+        "ViT-B/32",
+        device=device,
+        download_root=save_path,
+    )
+    tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
 
-prefix_length = 10
-caption_model = ClipCaptionModel(prefix_length)
+    # @title Load model weights
 
-caption_model.load_state_dict(
-    torch.load(
-        os.path.join(save_path, "clipcap_conceptual_weights.pth"),
-        map_location=CPU,
-    ),
-    strict=False,
-)
+    prefix_length = 10
+    caption_model = ClipCaptionModel(prefix_length)
 
-caption_model = caption_model.eval()
-caption_model = caption_model.to(device)
+    caption_model.load_state_dict(
+        torch.load(
+            os.path.join(save_path, "clipcap_conceptual_weights.pth"),
+            map_location=CPU,
+        ),
+        strict=False,
+    )
 
+    caption_model = caption_model.eval()
+    caption_model = caption_model.to(device)
 
-def extract_caption(image_path):
     image = io.imread(image_path)
     pil_image = Image.fromarray(image)
     image = preprocess(pil_image).unsqueeze(0).to(device)
-    with torch.no_grad():
-        prefix = clip_model.encode_image(image).to(device, dtype=torch.float32)
-        prefix_embed = caption_model.clip_project(prefix).reshape(
-            1, prefix_length, -1
-        )
+    prefix = clip_model.encode_image(image).to(device, dtype=torch.float32)
+    prefix_embed = caption_model.clip_project(prefix).reshape(
+        1, prefix_length, -1
+    )
     generated_text_prefix = generate2(
         caption_model, tokenizer, embed=prefix_embed
     )
