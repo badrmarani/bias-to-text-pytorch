@@ -107,8 +107,8 @@ def main(
         df = pd.read_csv(f, index_col=0)
 
     # extract keywords
-    df_correct = df[df["correct"] == 0]
-    df_wrong = df[df["correct"] == 1]
+    df_wrong = df[df["correct"] == 0]
+    df_correct = df[df["correct"] == 1]
 
     # y: not blond; pred: blond
     df_wrong_class_0 = df_wrong[df_wrong["target"] == 0]
