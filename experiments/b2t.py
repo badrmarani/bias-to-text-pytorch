@@ -107,14 +107,14 @@ def main(
         df = pd.read_csv(f, index_col=0)
 
     # extract keywords
-    df_wrong = df[df["correct"] == 0]
-    df_correct = df[df["correct"] == 1]
 
+    df_wrong = df[df["correct"] == 0]
     # y: not blond; pred: blond
     df_wrong_class_0 = df_wrong[df_wrong["target"] == 0]
     # y: blond; pred: not blond
     df_wrong_class_1 = df_wrong[df_wrong["target"] == 1]
 
+    df_correct = df[df["correct"] == 1]
     # y: not blond; pred: not blond
     df_correct_class_0 = df_correct[df_correct["target"] == 0]
     # y: blond; pred: blond
@@ -132,34 +132,40 @@ def main(
 
     # compute `clip score`
     kwargs = dict(device=device, clip_weights_path="./data/pretrained_models/")
-    score_wrong_class_0 = clip_score(
-        images_dir,
-        df_wrong_class_0["filename"],
-        keywords_wrong_class_0,
-        **kwargs,
-    )
-    score_wrong_class_1 = clip_score(
-        images_dir,
-        df_wrong_class_1["filename"],
-        keywords_wrong_class_1,
-        **kwargs,
-    )
 
-    score_correct_class_0 = clip_score(
-        images_dir,
-        df_correct_class_0["filename"],
-        keywords_wrong_class_0,
-        **kwargs,
-    )
-    score_correct_class_1 = clip_score(
-        images_dir,
-        df_correct_class_1["filename"],
-        keywords_wrong_class_1,
-        **kwargs,
-    )
+    if df_wrong_class_0.empty or df_correct_class_0.empty:
+        cs_class_0 = torch.tensor([0.0])  # we can't decide
+    else:
+        score_wrong_class_0 = clip_score(
+            images_dir,
+            df_wrong_class_0["filename"],
+            keywords_wrong_class_0,
+            **kwargs,
+        )
+        score_correct_class_0 = clip_score(
+            images_dir,
+            df_correct_class_0["filename"],
+            keywords_wrong_class_0,
+            **kwargs,
+        )
+        cs_class_0 = score_wrong_class_0 - score_correct_class_0
 
-    cs_class_0 = score_wrong_class_0 - score_correct_class_0
-    cs_class_1 = score_wrong_class_1 - score_correct_class_1
+    if df_wrong_class_1.empty or df_correct_class_1.empty:
+        cs_class_1 = torch.tensor([0.0])  # we can't decide
+    else:
+        score_wrong_class_1 = clip_score(
+            images_dir,
+            df_wrong_class_1["filename"],
+            keywords_wrong_class_1,
+            **kwargs,
+        )
+        score_correct_class_1 = clip_score(
+            images_dir,
+            df_correct_class_1["filename"],
+            keywords_wrong_class_1,
+            **kwargs,
+        )
+        cs_class_1 = score_wrong_class_1 - score_correct_class_1
 
     # saving results
     df = pd.DataFrame(
@@ -170,11 +176,16 @@ def main(
             "class_1/score",
         ],
     )
+    # df = pd.DataFrame()
 
-    df["class_0/keyword"] = keywords_wrong_class_0
-    df["class_0/score"] = cs_class_0.cpu().numpy()
-    df["class_1/keyword"] = keywords_wrong_class_1
-    df["class_1/score"] = cs_class_1.cpu().numpy()
+    if len(keywords_wrong_class_0):
+        df["class_0/keyword"] = keywords_wrong_class_0
+        df["class_0/score"] = cs_class_0.cpu().numpy()
+
+    if len(keywords_wrong_class_1):
+        df["class_1/keyword"] = keywords_wrong_class_1
+        df["class_1/score"] = cs_class_1.cpu().numpy()
+
     df.to_csv(os.path.join(results_dir, "summary_score.csv"))
 
 

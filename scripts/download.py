@@ -4,7 +4,6 @@ from argparse import ArgumentParser
 from torchvision.datasets import utils
 
 os.environ["CURL_CA_BUNDLE"] = ""
-
 # file id, filename
 files = {
     "results/b2t_blond": [
@@ -13,6 +12,7 @@ files = {
     "pretrained_models": [
         ("1Ue8knFLZyePu36U22z4M7bB1eh-tVpX4", "clf_resnet_erm_celeba.pth"),
         ("1Ue8knFLZyePu36U22z4M7bB1eh-tVpX4", "clf_resnet_erm_waterbirds.pth"),
+        ("1kt3Ad9iTFvHdCbI-sCJ0t_oXwl5TFPg2", "clf_resnet_dro_waterbirds.pth"),
         ("1XsVzNBo_jW_ZTDN4rrgLia0zTWaEaPh6", "clipcap_coco_weights.pth"),
         ("1qQkq3zpgONNUogyi8GGIWLGQ8r_mnuNj", "clipcap_conceptual_weights.pth"),
     ],
