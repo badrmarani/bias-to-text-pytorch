@@ -30,11 +30,9 @@ To install the environment, run : `poetry install`. Finally, to activate the vir
     python scripts/download.py --root="./data/" --type="pretrained_models"
     ```
 
-
-
 ## Evaluation
 
-An example notebook demonstrating how B2T works on the CelebA and Waterbirds datasets is provided in [b2t_waterbirds.ipynb](https://colab.research.google.com/gist/badrmarani/cf49ac83016da8bf4f1256dc8ddb6591/b2t_waterbirds.ipynb). Or after you have downloaded the dataset and pretrained models, run the following command:
+An example notebook demonstrating how B2T works on the CelebA and Waterbirds datasets is provided in [b2t_waterbirds.ipynb](https://colab.research.google.com/gist/badrmarani/cf49ac83016da8bf4f1256dc8ddb6591/b2t_waterbirds.ipynb). Or, after downloading the dataset and pretrained models, you can run the following command
 
 ```bash
 python ./experiments/b2t.py\
