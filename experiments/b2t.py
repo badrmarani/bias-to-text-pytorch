@@ -42,9 +42,9 @@ def clip_score_wrapper(images_dir, df_wrong, df_correct, keywords, **kwargs):
 @torch.no_grad()
 def main(
     classification_model_path: str,
-    captioning_model: str,
-    extract_captions: bool,
     dataset_name: str,
+    captioning_model: str = None,
+    extract_captions: bool = True,
 ):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -66,7 +66,7 @@ def main(
     results_dir = os.path.join("data/results/b2t/", f"{dataset_name}/")
     os.makedirs(results_dir, exist_ok=True)
 
-    f = os.path.join(results_dir, "summary.csv")
+    f = os.path.join(results_dir, f"{captioning_model}_summary.csv")
     if not os.path.exists(f):
         model = torch.load(classification_model_path, map_location=device)
         model.eval()
@@ -79,8 +79,7 @@ def main(
                 "correct",
                 "group",
                 "confounder",
-                "caption/clipcap",
-                "caption/git",
+                f"caption/{captioning_model}",
             ],
         )
 
@@ -106,9 +105,9 @@ def main(
                 caption = None
                 if extract_captions:
                     abs_filename_path = os.path.join(images_dir, filenames[i])
-                    caption = extract_caption(abs_filename_path, "clipcap")
-                    if captioning_model == "git":
-                        caption_git = extract_caption(abs_filename_path, "git")
+                    caption = extract_caption(
+                        abs_filename_path, captioning_model
+                    )
 
                 df.loc[len(df.index)] = {
                     "filename": filenames[i],
@@ -117,8 +116,7 @@ def main(
                     "correct": correct[i].item(),
                     "group": targets_groups[i].item(),
                     "confounder": targets_confounder[i].item(),
-                    "caption/clipcap": caption,
-                    "caption/git": caption_git,
+                    f"caption/{captioning_model}": caption,
                 }
 
                 df.to_csv(f)
@@ -140,20 +138,14 @@ def main(
     # y: blond; pred: blond
     df_correct_class_1 = df_correct[df_correct["target"] == 1]
 
-    caption_class_0 = " ".join(df_wrong_class_0["caption/clipcap"].tolist())
-    caption_class_1 = " ".join(df_wrong_class_1["caption/clipcap"].tolist())
+    caption_class_0 = " ".join(
+        df_wrong_class_0[f"caption/{captioning_model}"].tolist()
+    )
+    caption_class_1 = " ".join(
+        df_wrong_class_1[f"caption/{captioning_model}"].tolist()
+    )
     keywords_class_0 = extract_keywords(caption_class_0)
     keywords_class_1 = extract_keywords(caption_class_1)
-
-    if captioning_model == "git":
-        caption_git_class_0 = " ".join(
-            df_wrong_class_0[f"caption/{captioning_model}"].tolist()
-        )
-        caption_git_class_1 = " ".join(
-            df_wrong_class_1[f"caption/{captioning_model}"].tolist()
-        )
-        keywords_git_class_0 = extract_keywords(caption_git_class_0)
-        keywords_git_class_1 = extract_keywords(caption_git_class_1)
 
     # compute `clip score`
     kwargs = dict(device=device, clip_weights_path="./data/pretrained_models/")
@@ -173,32 +165,12 @@ def main(
         **kwargs,
     )
 
-    if captioning_model == "git":
-        git_score_class_0 = clip_score_wrapper(
-            images_dir,
-            df_wrong_class_0,
-            df_correct_class_0,
-            keywords_git_class_0,
-            **kwargs,
-        )
-        git_score_class_1 = clip_score_wrapper(
-            images_dir,
-            df_wrong_class_1,
-            df_correct_class_1,
-            keywords_git_class_1,
-            **kwargs,
-        )
-
     # saving results
     df = pd.DataFrame(
         columns=[
-            "class_0/clipcap_keyword",
+            f"class_0/{captioning_model}_keyword",
             "class_0/clip_score",
-            "class_1/clipcap_keyword",
-            "class_1/clip_score",
-            "class_0/git_keyword",
-            "class_0/clip_score",
-            "class_1/git_keyword",
+            f"class_1/{captioning_model}_keyword",
             "class_1/clip_score",
         ],
     )
@@ -206,17 +178,13 @@ def main(
     if len(keywords_class_0):
         df["class_0/keyword"] = keywords_class_0
         df["class_0/score"] = score_class_0.cpu().numpy()
-    if len(keywords_git_class_0):
-        df["class_0/git_keyword"] = keywords_git_class_0
-        df["class_0/git_score"] = git_score_class_0.cpu().numpy()
     if len(keywords_class_1):
         df["class_1/keyword"] = keywords_class_1
         df["class_1/score"] = score_class_1.cpu().numpy()
-    if len(keywords_git_class_1):
-        df["class_1/git_keyword"] = keywords_git_class_1
-        df["class_1/git_score"] = git_score_class_1.cpu().numpy()
 
-    df.to_csv(os.path.join(results_dir, "summary_score.csv"))
+    df.to_csv(
+        os.path.join(results_dir, f"{captioning_model}_summary_score.csv")
+    )
 
 
 if __name__ == "__main__":
