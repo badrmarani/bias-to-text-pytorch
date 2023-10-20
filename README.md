@@ -40,3 +40,17 @@ python ./experiments/b2t.py\
     --dataset_name="waterbirds"\
     --captioning_model="clipcap"
 ```
+
+## References
+
+This is a list of models, metrics, and datasets used in this project:
+
+### Models
+
+- Kim, Y., Mo, S., Kim, M., Lee, K., Lee, J., & Shin, J. (2023). Bias-to-text : Debiasing unknown visual biases through language interpretation. arXiv. <https://doi.org/10.48550/arXiv.2301.11104>.
+- Yenamandra, S., Ramesh, P., Prabhu, V., & Hoffman, J. (2023). Facts : First amplify correlations and then slice to discover bias. arXiv. <https://doi.org/10.48550/arXiv.2309.17430>
+
+### Datasets
+
+- Liu, Z., Luo, P., Wang, X., & Tang, X. (2015). Deep learning face attributes in the wild. arXiv. <https://doi.org/10.48550/arXiv.1411.7766>
+- Sagawa, S., Koh, P. W., Hashimoto, T. B., & Liang, P. (2020). Distributionally robust neural networks for group shifts : On the importance of regularization for worst-case generalization. arXiv. <https://doi.org/10.48550/arXiv.1911.08731>
