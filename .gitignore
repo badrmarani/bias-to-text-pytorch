@@ -1,4 +1,4 @@
-reated by https://www.toptal.com/developers/gitignore/api/jupyternotebooks,python
+Created by https://www.toptal.com/developers/gitignore/api/jupyternotebooks,python
 # Edit at https://www.toptal.com/developers/gitignore?templates=jupyternotebooks,python
 
 ### JupyterNotebooks ###
@@ -188,3 +188,4 @@ pyrightconfig.json
 
 references/
 data/
+logs/
