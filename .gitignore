@@ -189,3 +189,4 @@ pyrightconfig.json
 references/
 data/
 logs/
+*.lock

@@ -2,7 +2,7 @@
 from setuptools import find_packages, setup
 
 setup(
-    name="commonalizer",
+    name="b2t",
     version="0.1.0",
     author="Badr-Eddine Marani",
     author_email="badr-eddine.marani@outlook.com",

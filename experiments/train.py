@@ -5,8 +5,8 @@ import warnings
 import pytorch_lightning as pl
 import torch
 
-import commonalizer
-from commonalizer.models import LightningBase, ResNet
+import b2t
+from b2t.models import LightningBase, ResNet
 
 warnings.filterwarnings("ignore")
 
@@ -33,7 +33,7 @@ def train(args: argparse.Namespace) -> None:
 
     # dataset
 
-    dataset = getattr(commonalizer.datasets, dataset_name)
+    dataset = getattr(b2t.datasets, dataset_name)
 
     datamodule = pl.LightningDataModule.from_datasets(
         train_dataset=dataset(root=images_dir, split="train"),
@@ -86,7 +86,7 @@ if __name__ == "__main__":
         "--dataset-name",
         type=str,
         default="CelebA",
-        choices=dir(commonalizer.datasets),
+        choices=dir(b2t.datasets),
     )
     parser.add_argument("--images-dir", type=str, required=True)
     parser.add_argument("--batch-size", type=int, default=32)

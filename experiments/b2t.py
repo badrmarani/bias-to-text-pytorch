@@ -8,11 +8,11 @@ from torch import utils
 from torch.serialization import SourceChangeWarning
 from tqdm import tqdm
 
-from commonalizer import seed_everything
-from commonalizer.captions import extract_caption
-from commonalizer.dataset import CelebA, Waterbirds
-from commonalizer.keywords import extract_keywords
-from commonalizer.metrics import clip_score
+from b2t import seed_everything
+from b2t.captions import extract_caption
+from b2t.dataset import CelebA, Waterbirds
+from b2t.keywords import extract_keywords
+from b2t.metrics import clip_score
 
 warnings.filterwarnings("ignore", category=SourceChangeWarning)
 

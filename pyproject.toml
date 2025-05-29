@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "commonalizer"
+name = "b2t"
 version = "0.1.0"
 description = ""
 authors = ["badrmarani <badr-eddine.marani@outlook.com>"]
 readme = "README.md"
-packages = [{ include = "commonalizer" }]
+packages = [{ include = "b2t" }]
 
 [tool.poetry.dependencies]
 python = "3.10.9"

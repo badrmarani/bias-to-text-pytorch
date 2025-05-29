@@ -1,4 +1,6 @@
-# Commonalizer
+# Bias-to-Text
+
+A PyTorch implementation of Bias-to-Text for discovering and mitigating visual biases in classification models through keyword-based explanations.
 
 ## Installation
 
@@ -14,21 +16,21 @@ To install the environment, run : `poetry install`. Finally, to activate the vir
 
 - Download CelebA
 
-    ```bash
-    python scripts/download.py --root="./data/" --type="images/celeba"
-    ```
+```bash
+python scripts/download.py --root="./data/" --type="images/celeba"
+```
 
 - Download Waterbirds
 
-    ```bash
-    python scripts/download.py --root="./data/" --type="images/waterbirds"
-    ```
+```bash
+python scripts/download.py --root="./data/" --type="images/waterbirds"
+```
 
 - Download pretrained checkpoints of CelebA
 
-    ```bash
-    python scripts/download.py --root="./data/" --type="pretrained_models"
-    ```
+```bash
+python scripts/download.py --root="./data/" --type="pretrained_models"
+```
 
 ## Evaluation
 
